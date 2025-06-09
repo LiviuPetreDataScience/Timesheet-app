@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Project Manager - Projects | FindUs</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f4f6f8;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            background: #fff;
+            max-width: 950px;
+            margin: 40px auto 0 auto;
+            padding: 32px 32px 28px 32px;
+            border-radius: 8px;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 28px;
+            color: #2d3a4b;
+        }
+        .logout-link {
+            float: right;
+            margin-top: -40px;
+            margin-right: 8px;
+            font-size: 15px;
+        }
+        .logout-link a {
+            color: #1976d2;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .logout-link a:hover {
+            text-decoration: underline;
+        }
+        .error-message {
+            color: #d32f2f;
+            background: #ffebee;
+            border: 1px solid #ffcdd2;
+            padding: 10px 14px;
+            border-radius: 4px;
+            margin-bottom: 18px;
+            font-size: 15px;
+        }
+        .project-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 32px;
+        }
+        .project-table th, .project-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #e0e0e0;
+            text-align: left;
+        }
+        .project-table th {
+            background: #f5f7fa;
+            color: #34495e;
+            font-weight: 600;
+        }
+        .project-table tr:last-child td {
+            border-bottom: none;
+        }
+        .action-btn {
+            padding: 6px 16px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-right: 4px;
+            transition: background 0.2s;
+        }
+        .edit-btn {
+            background: #1976d2;
+            color: #fff;
+        }
+        .edit-btn:hover {
+            background: #125ea7;
+        }
+        .save-btn {
+            background: #388e3c;
+            color: #fff;
+        }
+        .save-btn:hover {
+            background: #256029;
+        }
+        .cancel-btn {
+            background: #b0bec5;
+            color: #263238;
+        }
+        .cancel-btn:hover {
+            background: #90a4ae;
+        }
+        .form-inline input[type="text"], .form-inline input[type="date"], .form-inline select {
+            padding: 6px 8px;
+            font-size: 14px;
+            border: 1px solid #cfd8dc;
+            border-radius: 4px;
+            margin-right: 8px;
+            background: #f9fafb;
+        }
+        .form-inline select {
+            min-width: 120px;
+        }
+        .create-project-form {
+            margin-top: 18px;
+            padding: 18px 0 0 0;
+            border-top: 1px solid #e0e0e0;
+        }
+        .create-project-form label {
+            margin-right: 8px;
+            font-weight: 500;
+            color: #34495e;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 32px;
+            color: #b0bec5;
+            font-size: 13px;
+        }
+    </style>
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        function enableEdit(rowId) {
+            document.querySelectorAll('.edit-row').forEach(function(row) {
+                row.style.display = 'none';
+            });
+            document.querySelectorAll('.display-row').forEach(function(row) {
+                row.style.display = '';
+            });
+            document.getElementById('display-row-' + rowId).style.display = 'none';
+            document.getElementById('edit-row-' + rowId).style.display = '';
+        }
+        function cancelEdit(rowId) {
+            document.getElementById('edit-row-' + rowId).style.display = 'none';
+            document.getElementById('display-row-' + rowId).style.display = '';
+        }
+        /*]]>*/
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="logout-link">
+            <a th:href="@{/logout}">Logout</a>
+        </div>
+        <h2>My Projects</h2>
+        <div th:if="${error}" class="error-message" th:text="${error}"></div>
+        <table class="project-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Project Manager</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th>Status</th>
+                    <th style="width: 120px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="project : ${projects}" th:id="'display-row-' + ${project.id}" class="display-row">
+                    <td th:text="${project.name}"></td>
+                    <td th:text="${project.projectManagerUsername}"></td>
+                    <td th:text="${project.startDate}"></td>
+                    <td th:text="${project.endDate}"></td>
+                    <td th:text="${#strings.capitalize(project.status.name().replace('_', ' ').toLowerCase())}"></td>
+                    <td>
+                        <button type="button" class="action-btn edit-btn"
+                                th:onclick="'enableEdit(' + ${project.id} + ')'"
+                                >Edit</button>
+                    </td>
+                </tr>
+                <tr th:each="project : ${projects}" th:id="'edit-row-' + ${project.id}" class="edit-row" style="display:none;">
+                    <form th:action="@{'/project-manager/projects/update/' + ${project.id}}" method="post" class="form-inline">
+                        <td>
+                            <input type="text" name="name" th:value="${project.name}" maxlength="64" required />
+                        </td>
+                        <td>
+                            <input type="text" name="projectManagerUsername" th:value="${project.projectManagerUsername}" readonly style="background:#e0e0e0;" />
+                        </td>
+                        <td>
+                            <input type="date" name="startDate" th:value="${project.startDate}" required />
+                        </td>
+                        <td>
+                            <input type="date" name="endDate" th:value="${project.endDate}" required />
+                        </td>
+                        <td>
+                            <select name="status" required>
+                                <option th:each="status : ${statuses}"
+                                        th:value="${status}"
+                                        th:text="${#strings.capitalize(status.name().replace('_', ' ').toLowerCase())}"
+                                        th:selected="${status == project.status}"></option>
+                            </select>
+                        </td>
+                        <td>
+                            <button type="submit" class="action-btn save-btn">Save</button>
+                            <button type="button" class="action-btn cancel-btn"
+                                    th:onclick="'cancelEdit(' + ${project.id} + ')'"
+                                    >Cancel</button>
+                        </td>
+                    </form>
+                </tr>
+                <tr th:if="${#lists.isEmpty(projects)}">
+                    <td colspan="6" style="text-align:center; color:#b0bec5;">No projects found. Create your first project below.</td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="create-project-form">
+            <form th:action="@{/project-manager/projects/create}" method="post" class="form-inline">
+                <label for="new-name">Add Project:</label>
+                <input id="new-name" name="name" type="text" maxlength="64" required placeholder="Project Name"
+                       th:value="${newProject.name}" />
+                <input type="text" name="projectManagerUsername" th:value="${#httpSession.getAttribute('loggedUser') != null ? #httpSession.getAttribute('loggedUser').username : ''}" readonly style="background:#e0e0e0;" placeholder="Manager" />
+                <input name="startDate" type="date" required th:value="${newProject.startDate}" />
+                <input name="endDate" type="date" required th:value="${newProject.endDate}" />
+                <select name="status" required>
+                    <option value="" disabled th:selected="${newProject.status == null}">Select status</option>
+                    <option th:each="status : ${statuses}"
+                            th:value="${status}"
+                            th:text="${#strings.capitalize(status.name().replace('_', ' ').toLowerCase())}"
+                            th:selected="${newProject.status == status}"></option>
+                </select>
+                <button type="submit" class="action-btn save-btn">Create</button>
+            </form>
+        </div>
+    </div>
+    <div class="footer">
+        &copy; 2024 FindUs. All rights reserved.
+    </div>
+</body>
+</html>

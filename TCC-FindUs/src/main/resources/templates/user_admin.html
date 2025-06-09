@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>User Administration - FindUs</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f4f6f8;
+            margin: 0;
+            padding: 0;
+        }
+        .admin-container {
+            background: #fff;
+            max-width: 900px;
+            margin: 40px auto 0 auto;
+            padding: 32px 32px 28px 32px;
+            border-radius: 8px;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 28px;
+            color: #2d3a4b;
+        }
+        .logout-link {
+            float: right;
+            margin-top: -40px;
+            margin-right: 8px;
+            font-size: 15px;
+        }
+        .logout-link a {
+            color: #1976d2;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .logout-link a:hover {
+            text-decoration: underline;
+        }
+        .error-message {
+            color: #d32f2f;
+            background: #ffebee;
+            border: 1px solid #ffcdd2;
+            padding: 10px 14px;
+            border-radius: 4px;
+            margin-bottom: 18px;
+            font-size: 15px;
+        }
+        .user-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 32px;
+        }
+        .user-table th, .user-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #e0e0e0;
+            text-align: left;
+        }
+        .user-table th {
+            background: #f5f7fa;
+            color: #34495e;
+            font-weight: 600;
+        }
+        .user-table tr:last-child td {
+            border-bottom: none;
+        }
+        .action-btn {
+            padding: 6px 16px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-right: 4px;
+            transition: background 0.2s;
+        }
+        .edit-btn {
+            background: #1976d2;
+            color: #fff;
+        }
+        .edit-btn:hover {
+            background: #125ea7;
+        }
+        .delete-btn {
+            background: #d32f2f;
+            color: #fff;
+        }
+        .delete-btn:hover {
+            background: #a31515;
+        }
+        .save-btn {
+            background: #388e3c;
+            color: #fff;
+        }
+        .save-btn:hover {
+            background: #256029;
+        }
+        .cancel-btn {
+            background: #b0bec5;
+            color: #263238;
+        }
+        .cancel-btn:hover {
+            background: #90a4ae;
+        }
+        .form-inline input[type="text"], .form-inline select {
+            padding: 6px 8px;
+            font-size: 14px;
+            border: 1px solid #cfd8dc;
+            border-radius: 4px;
+            margin-right: 8px;
+            background: #f9fafb;
+        }
+        .form-inline select {
+            min-width: 120px;
+        }
+        .create-user-form {
+            margin-top: 18px;
+            padding: 18px 0 0 0;
+            border-top: 1px solid #e0e0e0;
+        }
+        .create-user-form label {
+            margin-right: 8px;
+            font-weight: 500;
+            color: #34495e;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 32px;
+            color: #b0bec5;
+            font-size: 13px;
+        }
+    </style>
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        function enableEdit(rowId) {
+            document.querySelectorAll('.edit-row').forEach(function(row) {
+                row.style.display = 'none';
+            });
+            document.querySelectorAll('.display-row').forEach(function(row) {
+                row.style.display = '';
+            });
+            document.getElementById('display-row-' + rowId).style.display = 'none';
+            document.getElementById('edit-row-' + rowId).style.display = '';
+        }
+        function cancelEdit(rowId) {
+            document.getElementById('edit-row-' + rowId).style.display = 'none';
+            document.getElementById('display-row-' + rowId).style.display = '';
+        }
+        /*]]>*/
+    </script>
+</head>
+<body>
+    <div class="admin-container">
+        <div class="logout-link">
+            <a th:href="@{/logout}">Logout</a>
+        </div>
+        <h2>User Administration</h2>
+        <div th:if="${error}" class="error-message" th:text="${error}"></div>
+        <table class="user-table">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Role</th>
+                    <th style="width: 180px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="user : ${users}" th:id="'display-row-' + ${user.id}" class="display-row">
+                    <td th:text="${user.username}"></td>
+                    <td th:text="${#strings.capitalize(user.role.name().replace('_', ' ').toLowerCase())}"></td>
+                    <td>
+                        <button type="button" class="action-btn edit-btn"
+                                th:onclick="'enableEdit(' + ${user.id} + ')'"
+                                >Edit</button>
+                        <form th:action="@{'/user-admin/delete/' + ${user.id}}" method="post" style="display:inline;">
+                            <button type="submit" class="action-btn delete-btn"
+                                    th:disabled="${#httpSession.getAttribute('loggedUser') != null and #httpSession.getAttribute('loggedUser').id == user.id}"
+                                    th:title="${#httpSession.getAttribute('loggedUser') != null and #httpSession.getAttribute('loggedUser').id == user.id ? 'You cannot delete your own admin account while logged in.' : 'Delete user'}"
+                                    >Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                <tr th:each="user : ${users}" th:id="'edit-row-' + ${user.id}" class="edit-row" style="display:none;">
+                    <form th:action="@{'/user-admin/update/' + ${user.id}}" method="post" class="form-inline">
+                        <td>
+                            <input type="text" name="username" th:value="${user.username}" maxlength="32" required />
+                        </td>
+                        <td>
+                            <select name="role" required>
+                                <option th:each="role : ${roles}"
+                                        th:value="${role}"
+                                        th:text="${#strings.capitalize(role.name().replace('_', ' ').toLowerCase())}"
+                                        th:selected="${role == user.role}"></option>
+                            </select>
+                        </td>
+                        <td>
+                            <button type="submit" class="action-btn save-btn">Save</button>
+                            <button type="button" class="action-btn cancel-btn"
+                                    th:onclick="'cancelEdit(' + ${user.id} + ')'"
+                                    >Cancel</button>
+                        </td>
+                    </form>
+                </tr>
+            </tbody>
+        </table>
+        <div class="create-user-form">
+            <form th:action="@{/user-admin/create}" method="post" class="form-inline">
+                <label for="new-username">Add User:</label>
+                <input id="new-username" name="username" type="text" maxlength="32" required placeholder="Username"
+                       th:value="${newUser.username}" />
+                <select name="role" required>
+                    <option value="" disabled th:selected="${newUser.role == null}">Select role</option>
+                    <option th:each="role : ${roles}"
+                            th:value="${role}"
+                            th:text="${#strings.capitalize(role.name().replace('_', ' ').toLowerCase())}"
+                            th:selected="${newUser.role == role}"></option>
+                </select>
+                <button type="submit" class="action-btn save-btn">Create</button>
+            </form>
+        </div>
+    </div>
+    <div class="footer">
+        &copy; 2024 FindUs. All rights reserved.
+    </div>
+</body>
+</html>
